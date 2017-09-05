@@ -167,23 +167,45 @@ class aide (
     notify  => Exec['update_aide_db']
   }
 
-  file { '/usr/local/sbin/update_aide':
-    ensure  => 'file',
-    owner   => 'root',
-    group   => 'root',
-    mode    => '0700',
-    content => "#!/bin/sh
-      killall -9 aide;
-      wait;
+  if $facts['os']['name'] in ['RedHat','CentOS'] {
+    file { '/usr/local/sbin/update_aide':
+      ensure  => 'file',
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0700',
+      content => "#!/bin/sh
+        killall -9 aide;
+        wait;
 
-      if [ -f ${dbdir}/${database_name} ]; then
-        /bin/nice -n 19 /usr/sbin/aide -c /etc/aide.conf -u;
-      else
-        /bin/nice -n 19 /usr/sbin/aide -c /etc/aide.conf -i;
-      fi
+        if [ -f ${dbdir}/${database_name} ]; then
+          /bin/nice -n 19 /usr/sbin/aide -c /etc/aide.conf -u;
+        else
+          /bin/nice -n 19 /usr/sbin/aide -c /etc/aide.conf -i;
+        fi
 
-      wait;
-      mv ${dbdir}/${database_out_name} ${dbdir}/${database_name}"
+        wait;
+        mv ${dbdir}/${database_out_name} ${dbdir}/${database_name}"
+    }
+  }
+  elsif $facts['os']['name'] in ['Debian','Ubuntu'] {
+    file { '/usr/local/sbin/update_aide':
+      ensure  => 'file',
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0700',
+      content => "#!/bin/sh
+        killall -9 aide;
+        wait;
+
+        if [ -f ${dbdir}/${database_name} ]; then
+          /usr/bin/nice -n 19 /usr/bin/aide -c /etc/aide.conf -u;
+        else
+          /usr/bin/nice -n 19 /usr/bin/aide -c /etc/aide.conf -i;
+        fi
+
+        wait;
+        mv ${dbdir}/${database_out_name} ${dbdir}/${database_name}"
+    }
   }
 
   # CCE-27135-3
